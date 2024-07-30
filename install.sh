@@ -48,7 +48,7 @@ if [ -f Cfscanner-pre.py ]; then
     if [ "$first_line" != "V=1" ]; then
         rm Cfscanner-pre.py
         echo "Updating Cfscanner-pre.py..."
-        curl -fsSL -o Cfscanner-pre.py https://raw.githubusercontent.com/arshiacomplus/WarpScanner/main/Cfscanner-pre.py || { echo \"Failed to download Cfscanner-pre.py. Exiting.\"; exit 1; }
+        curl -fsSL -o Cfscanner-pre.py https://raw.githubusercontent.com/arshiacomplus/Cf-Scanner-Pre/main/Cfscanner-pre.py || { echo \"Failed to download Cfscanner-pre.py. Exiting.\"; exit 1; }
         
         python Cfscanner-pre.py
         exit 0
@@ -59,5 +59,5 @@ if [ -f Cfscanner-pre.py ]; then
 fi
 
 echo "install Cfscanner-pre.py"
-curl -fsSL -o Cfscanner-pre.py https://raw.githubusercontent.com/arshiacomplus/WarpScanner/main/Cfscanner-pre.py || { echo \"Failed to download Cfscanner-pre.py. Exiting.\"; exit 1; }
+curl -fsSL -o Cfscanner-pre.py https://raw.githubusercontent.com/arshiacomplus/Cf-Scanner-Pre/main/Cfscanner-pre.py || { echo \"Failed to download Cfscanner-pre.py. Exiting.\"; exit 1; }
 python Cfscanner-pre.py
