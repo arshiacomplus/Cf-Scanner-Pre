@@ -448,13 +448,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/arshiacomplus/Cf-Scanner-Pre
     			ping_range=input('\nEnter Range ping (from Zero to What ?[defualt 300] : ')
     			if ping_range=='':
     			    ping_range='300'
-    port=input('\nEnter a port for check IPs[defualt 443]: ')
-    if port =='':
-    	port='443'
-    else:
-    	while not port.isdigit():
-    		port=input('\nEnter a port for check IPs[defualt 443]: ')
-    port =int(port)
+
     rand_or_uset=input_p('Choose ',{'1' :'default', '2':'user/cfrange'})
     
     main()
