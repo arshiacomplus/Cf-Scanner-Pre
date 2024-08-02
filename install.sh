@@ -45,7 +45,7 @@ if ! command -v curl; then
 fi
 if [ -f Cfscanner-pre.py ]; then
     first_line=$(head -n 1 Cfscanner-pre.py)
-    if [ "$first_line" != "V=1" ]; then
+    if [ "$first_line" != "V=2" ]; then
         rm Cfscanner-pre.py
         echo "Updating Cfscanner-pre.py..."
         curl -fsSL -o Cfscanner-pre.py https://raw.githubusercontent.com/arshiacomplus/Cf-Scanner-Pre/main/Cfscanner-pre.py || { echo \"Failed to download Cfscanner-pre.py. Exiting.\"; exit 1; }
