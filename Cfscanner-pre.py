@@ -1,5 +1,24 @@
+V=2
+import os
+import socket
+import urllib.request
+import urllib.parse
+from urllib.parse import quote
+try:
+    import retrying
+except Exception:
+    print("retrying module not installed. Installing now...")
+    os.system('pip install retrying')
+try:
+    import retrying
+except Exception:
+    os.system("wget https://github.com/rholder/retrying/archive/refs/tags/v1.3.3.tar.gz")
+    os.system("tar -zxvf v1.3.3.tar.gz")
+    os.chdir("retrying-1.3.3")
+    os.system("python setup.py install")
+from retrying import retry
+from requests.exceptions import ConnectionError
 
-V=1
 try:
     from icmplib import ping as pinging
 except Exception:
@@ -20,11 +39,34 @@ from rich.table import Table
 import random
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import os
 
+
+
+try:
+    import requests
+except ImportError:
+    print("Requests module not installed. Installing now...")
+    os.system('pip install requests')
+try:
+    import requests
+except ModuleNotFoundError:
+    os.system('wget https://github.com/psf/requests/releases/download/v2.32.2/requests-2.32.2.tar.gz')
+    os.system('tar -xzvf requests-2.32.2.tar.gz')
+    os.chdir('requests-2.32.2')
+    os.system('python setup.py install')
+try:
+    import requests
+except ModuleNotFoundError:
+    os.system('curl -L -o requests-2.32.2.tar.gz https://github.com/psf/requests/releases/download/v2.32.2/requests-2.32.2.tar.gz')
+    os.system('tar -xzvf requests-2.32.2.tar.gz')
+    os.chdir('requests-2.32.2')
+    os.system('python setup.py install')
+    import requests
+    
 results=[]
 console=Console()
 save_result=[]
+
 if not os.path.exists('/storage/emulated/0/cfrange.txt'):
     	os.system('termux-setup-storage')
     	with open('/storage/emulated/0/cfrange.txt', 'w') as f:
@@ -32,7 +74,29 @@ if not os.path.exists('/storage/emulated/0/cfrange.txt'):
     		print()
     		rprint('[bold red]\n cfrange.txt  created in /storage/emulated/0/cfrange.txt !\n enter an ip range you want to scan from cfexport.txt[/bold red]')
     		exit()
-    		
+def check_internet_connection():
+    try:
+        response = requests.get('http://www.google.com/', timeout=5)
+        return True
+    except requests.ConnectionError:
+        return False
+        
+def get_ip_details(ip_address):
+    ip_address=ip_address[0]
+    @retry(stop_max_attempt_number=3, wait_fixed=2000, retry_on_exception=lambda x: isinstance(x, ConnectionError))
+    def file_o():
+    	    	try:
+    	    		response = requests.get(f'http://ip-api.com/json/{ip_address}',timeout=10)
+    	    	except Exception:
+    	    		return {'countryCode':'Non'}
+    	    	return response.json()
+    	    
+    data = file_o()
+    
+    data=data['countryCode']
+    
+    return data
+    
 def info():
     console.clear()
     
@@ -58,7 +122,6 @@ def info():
     	os.system("termux-open-url 'https://github.com/arshiacomplus/'")
 def start_menu():
    
-    
     options = {
         "1": "Scan ip",
         "2": "Short cut",
@@ -67,7 +130,13 @@ def start_menu():
         
         "0" : "Exit"
     }
-
+    
+    if check_internet_connection()==True:
+    	rprint('[bold green]Internet is available[/bold green]\n')
+    else:
+    	rprint('[bold red]Internet is unavailable[/bold red]\n')
+    
+    
     rprint("[bold red]by Telegram= @arshiacomplus[/bold red]\n")
     for key, value in options.items():
         rprint(f" [bold yellow]{key}[/bold yellow]: {value}")
@@ -103,16 +172,26 @@ def create_ip_range(start_ip, end_ip):
     ip_range.append(end_ip)
     return ip_range
     
-def scan_ip_port(ip ,results):
+def scan_ip_port(ip ,results,loc):
+    
+    is_ok=False
+    
+    sockt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sockt.settimeout(5) 
+    result = sockt.connect_ex((ip, port))  
+    sockt.close()
+    if result == 0:
+            is_ok= True 
+    else:
+            results.append((ip,loc, 1000, 1, 0))
+            return
     
     
     icmp=pinging(ip, count=4, interval=1, timeout=5,privileged=False)
     
     
     
-    
-    
-    results.append((ip, float(icmp.avg_rtt), icmp.packet_loss, icmp.jitter))
+    results.append((ip,loc, float(icmp.avg_rtt), icmp.packet_loss, icmp.jitter))
 def main():
     global save_result
     
@@ -122,7 +201,7 @@ def main():
     rprint('[bold green]please wait scan ip ...[/bold green]')
     range_start=[]
     range_end=[]
-    if Which=='1':
+    if rand_or_uset=='2':
     	tc=0
     	f3=open('/storage/emulated/0/cfrange.txt', 'r')
     	b2=f3.readlines()
@@ -145,7 +224,7 @@ def main():
     	     	    range_end.append(i[i.index(':')+1:i.index('\n')])
     	        
     	    except Exception:
-    	     	
+
     	     	
     	     	    
     	     
@@ -182,19 +261,24 @@ def main():
 
     	  
     		
-    		
+    else:
+    	range_start=['198.41.128.0','173.245.48.0','103.21.244.0','199.212.90.0','185.146.172.0','154.85.99.0','170.114.46.0','185.238.228.0','195.85.23.0','185.176.26.0','185.18.250.0']
+    	range_end=['198.41.128.255','173.245.48.255','103.21.244.255','199.212.90.255','185.146.172.255','154.85.99.255','170.114.46.255','185.238.228.255','195.85.23.255','185.176.26.255','185.18.250.255']
     start_ips = range_start
     end_ips = range_end
     
    
 
     for start_ip, end_ip in zip(start_ips, end_ips):
+        loc=get_ip_details(start_ips)
         ip_range = create_ip_range(start_ip, end_ip)
         executor=ThreadPoolExecutor(max_workers=500)
+        
         try :
+                
                 for ip in ip_range:
                 	
-                	executor.submit(scan_ip_port, ip,results)
+                	executor.submit(scan_ip_port, ip,results,loc)
                 
                 	
                 
@@ -207,7 +291,7 @@ def main():
     extended_results = []
     
     for result in results:
-        ip, ping ,loss_rate,jitter= result
+        ip,loc, ping ,loss_rate,jitter= result
         if ping ==0.0:
         	ping=1000
         if float(jitter)==0.0:
@@ -219,12 +303,12 @@ def main():
         	
         combined_score = 0.5 * ping + 0.3 * loss_rate + 0.2 * jitter
 
-        extended_results.append((ip,ping, loss_rate,jitter, combined_score))
+        extended_results.append((ip,loc,ping, loss_rate,jitter, combined_score))
        
 
-    sorted_results = sorted(extended_results, key=lambda x: x[4])
+    sorted_results = sorted(extended_results, key=lambda x: x[5])
     
-    for ip, ping, loss_rate,jitter, combined_score in sorted_results:
+    for ip,loc, ping, loss_rate,jitter, combined_score in sorted_results:
             if Wh_save=='3':
                 if int(ping) <=  int(ping_range):
                     save_result.append(ip+' | '+'ping: '+str(ping)+' packet_lose: '+str(loss_rate)+' jitter: '+str(jitter)+'\n')
@@ -239,23 +323,24 @@ def main():
     console.clear()
     table = Table(show_header=True,title="IP Scan Results", header_style="bold blue")
     table.add_column("IP", style="dim", width=15)
+    table.add_column("Loc", style="dim", width=3)
     table.add_column("Ping (ms)", justify="right")
     table.add_column("Packet Loss (%)", justify="right")
     table.add_column("Jitter (ms)", justify="right")
     table.add_column("Score", justify="right")
 
-    for ip,  ping, loss_rate,jitter, combined_score in sorted_results[:10]:
-        table.add_row(ip,  f"{ping:.2f}" if ping else "None", f"{loss_rate:.2f}%",f"{jitter}", f"{combined_score:.2f}")
+    for ip,  loc,ping, loss_rate,jitter, combined_score in sorted_results[:10]:
+        table.add_row(ip,loc,  f"{ping:.2f}" if ping else "None", f"{loss_rate:.2f}%",f"{jitter}", f"{combined_score:.2f}")
 
     console.print(table)
 
     best_result = sorted_results[0] if sorted_results else None
     if best_result and best_result[0] != "No IP":
-        ip, ping, loss_rate,jitter, combined_score = best_result
+        ip, loc,ping, loss_rate,jitter, combined_score = best_result
         try:
-            console.print(f"The best IP: {ip}  ,ping: {ping:.2f} ms, packet loss: {loss_rate:.2f}%, {jitter:.2f} ms ,score: {combined_score:.2f}", style="green")
+            console.print(f"The best IP: {ip} ,location : {loc} ,ping: {ping:.2f} ms, packet loss: {loss_rate:.2f}%, {jitter:.2f} ms ,score: {combined_score:.2f}", style="green")
         except TypeError:
-            console.print(f"The best IP: {ip}  ,ping: None, packet loss: {loss_rate:.2f}% ,{jitter:.2f} ms ,  score: {combined_score:.2f}", style="green")
+            console.print(f"The best IP: {ip} ,location : {loc}  ,ping: None, packet loss: {loss_rate:.2f}% ,{jitter:.2f} ms ,  score: {combined_score:.2f}", style="green")
         ()
         best_result=[f"{ip}"]
     else:
@@ -375,6 +460,14 @@ bash <(curl -fsSL https://raw.githubusercontent.com/arshiacomplus/Cf-Scanner-Pre
     			ping_range=input('\nEnter Range ping (from Zero to What ?[defualt 300] : ')
     			if ping_range=='':
     			    ping_range='300'
-
+    port=input('\nEnter a port for check IPs[defualt 443]: ')
+    if port =='':
+    	port='443'
+    else:
+    	while not port.isdigit():
+    		port=input('\nEnter a port for check IPs[defualt 443]: ')
+    port =int(port)
+    rand_or_uset=input_p('Choose ',{'1' :'default', '2':'user/cfrange'})
+    
     main()
     
