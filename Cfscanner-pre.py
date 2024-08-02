@@ -1,4 +1,4 @@
-V=2
+V=3
 import os
 import socket
 import urllib.request
@@ -173,18 +173,6 @@ def create_ip_range(start_ip, end_ip):
     return ip_range
     
 def scan_ip_port(ip ,results,loc):
-    
-    is_ok=False
-    
-    sockt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sockt.settimeout(5) 
-    result = sockt.connect_ex((ip, port))  
-    sockt.close()
-    if result == 0:
-            is_ok= True 
-    else:
-            results.append((ip,loc, 1000, 1, 0))
-            return
     
     
     icmp=pinging(ip, count=4, interval=1, timeout=5,privileged=False)
